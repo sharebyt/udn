@@ -3,90 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URL Encoding/Decoding Test</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
+    <title>Data Compression Interface</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
     <style>
-        .container {
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
             max-width: 600px;
             margin: auto;
-            padding: 20px;
         }
-        .output {
-            margin-top: 10px;
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+        button {
             padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background-color: #f9f9f9;
+            font-size: 16px;
+            margin-right: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="title">URL Encoding/Decoding Test</h1>
-        <div class="field">
-            <label class="label" for="inputText">Input Text:</label>
-            <div class="control">
-                <input type="text" id="inputText" class="input" placeholder="Enter text to encode">
-            </div>
-        </div>
-        <div class="field">
-            <div class="control">
-                <button id="encodeButton" class="button is-primary">Encode and Set URL</button>
-            </div>
-        </div>
-        <div id="encodedOutput" class="output"></div>
-        <div class="field">
-            <div class="control">
-                <button id="decodeButton" class="button is-link">Get and Decode from URL</button>
-            </div>
-        </div>
-        <div id="decodedOutput" class="output"></div>
-    </div>
+    <h1>Data Compression and Encoding</h1>
+    
+    <textarea id="inputData" placeholder="Enter your text here..."></textarea>
+    <button onclick="updateURL()">Generate Encoded URL</button>
+    <button onclick="decodeFromURL()">Decode Data from URL</button>
+    
+    <h2>Encoded URL</h2>
+    <input type="text" id="encodedURL" readonly>
+
+    <h2>Decoded Data</h2>
+    <textarea id="outputData" readonly></textarea>
 
     <script>
-        const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+        function compressAndEncode(data) {
+            const compressed = pako.deflate(data, { to: 'string' });
+            return btoa(compressed);
+        }
 
-        const encode = (str) => {
-            let encoded = '';
-            for (let i = 0; i < str.length; i++) {
-                const charCode = str.charCodeAt(i);
-                encoded += charset[charCode % charset.length];
+        function decodeAndDecompress(encoded) {
+            const compressed = atob(encoded);
+            return pako.inflate(compressed, { to: 'string' });
+        }
+
+        function updateURL() {
+            const data = document.getElementById('inputData').value;
+            if (data.trim() === '') {
+                alert('Please enter some data.');
+                return;
             }
-            return encoded;
-        };
+            const encoded = compressAndEncode(data);
+            const url = `${window.location.href.split('?')[0]}?data=${encodeURIComponent(encoded)}`;
+            document.getElementById('encodedURL').value = url;
+        }
 
-        const decode = (str) => {
-            let decoded = '';
-            for (let i = 0; i < str.length; i++) {
-                const index = charset.indexOf(str[i]);
-                decoded += String.fromCharCode(index);
+        function decodeFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            const encodedData = params.get('data');
+            if (encodedData) {
+                try {
+                    const decodedData = decodeAndDecompress(decodeURIComponent(encodedData));
+                    document.getElementById('outputData').value = decodedData;
+                } catch (e) {
+                    document.getElementById('outputData').value = 'Error decoding data. Please check the URL.';
+                }
+            } else {
+                document.getElementById('outputData').value = 'No data parameter found in the URL.';
             }
-            return decoded;
+        }
+
+        // Load data from URL on page load
+        window.onload = function() {
+            decodeFromURL();
         };
-
-        const getRL = (param) => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const encoded = urlParams.get(param);
-            return encoded ? decode(encoded) : null;
-        };
-
-        const loadRL = (param, value) => {
-            const encoded = encode(value);
-            const urlParams = new URLSearchParams(window.location.search);
-            urlParams.set(param, encoded);
-            window.history.replaceState(null, '', `?${urlParams.toString()}`);
-        };
-
-        document.getElementById('encodeButton').addEventListener('click', () => {
-            const input = document.getElementById('inputText').value;
-            loadRL('test', input);
-            document.getElementById('encodedOutput').innerText = `Encoded URL: ${window.location.href}`;
-        });
-
-        document.getElementById('decodeButton').addEventListener('click', () => {
-            const decoded = getRL('test');
-            document.getElementById('decodedOutput').innerText = `Decoded Value: ${decoded}`;
-        });
     </script>
 </body>
 </html>
