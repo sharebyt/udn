@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Encoding/Decoding Test</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
+    <style>
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+        .output {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">URL Encoding/Decoding Test</h1>
+        <div class="field">
+            <label class="label" for="inputText">Input Text:</label>
+            <div class="control">
+                <input type="text" id="inputText" class="input" placeholder="Enter text to encode">
+            </div>
+        </div>
+        <div class="field">
+            <div class="control">
+                <button id="encodeButton" class="button is-primary">Encode and Set URL</button>
+            </div>
+        </div>
+        <div id="encodedOutput" class="output"></div>
+        <div class="field">
+            <div class="control">
+                <button id="decodeButton" class="button is-link">Get and Decode from URL</button>
+            </div>
+        </div>
+        <div id="decodedOutput" class="output"></div>
+    </div>
+
+    <script>
+        const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+        const encode = (str) => {
+            let encoded = '';
+            for (let i = 0; i < str.length; i++) {
+                const charCode = str.charCodeAt(i);
+                encoded += charset[charCode % charset.length];
+            }
+            return encoded;
+        };
+
+        const decode = (str) => {
+            let decoded = '';
+            for (let i = 0; i < str.length; i++) {
+                const index = charset.indexOf(str[i]);
+                decoded += String.fromCharCode(index);
+            }
+            return decoded;
+        };
+
+        const getRL = (param) => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const encoded = urlParams.get(param);
+            return encoded ? decode(encoded) : null;
+        };
+
+        const loadRL = (param, value) => {
+            const encoded = encode(value);
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set(param, encoded);
+            window.history.replaceState(null, '', `?${urlParams.toString()}`);
+        };
+
+        document.getElementById('encodeButton').addEventListener('click', () => {
+            const input = document.getElementById('inputText').value;
+            loadRL('test', input);
+            document.getElementById('encodedOutput').innerText = `Encoded URL: ${window.location.href}`;
+        });
+
+        document.getElementById('decodeButton').addEventListener('click', () => {
+            const decoded = getRL('test');
+            document.getElementById('decodedOutput').innerText = `Decoded Value: ${decoded}`;
+        });
+    </script>
+</body>
+</html>
